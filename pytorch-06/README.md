@@ -1,6 +1,12 @@
 
 ## 1 使用net_cnn.py
 ```bash
+python cifar.py --model cnn --gpu_id 1
+cnn : val_acc : 0.6813, val_loss : 0.3075759708881378
+```
+
+
+```bash
 2021-08-07 03:17:48 [10,  2000] train acc: 0.889 loss: 0.308 ; val acc: 0.694 loss: 0.299  lr: 0.001
 2021-08-07 03:18:07 [10,  4000] train acc: 0.869 loss: 0.356 ; val acc: 0.689 loss: 0.295  lr: 0.001
 2021-08-07 03:18:26 [10,  6000] train acc: 0.863 loss: 0.387 ; val acc: 0.678 loss: 0.307  lr: 0.001
@@ -21,6 +27,11 @@ Accuracy of truck : 68 %
 ```
 
 ## 2 使用net_gap.py
+```bash
+python cifar.py --model gap --gpu_id 1
+gap : val_acc : 0.6217, val_loss : 0.27244704961776733
+```
+
 ```bash
 2021-08-07 03:19:08 [10,  2000] train acc: 0.651 loss: 1.004 ; val acc: 0.616 loss: 0.272  lr: 0.001
 2021-08-07 03:19:27 [10,  4000] train acc: 0.655 loss: 0.982 ; val acc: 0.650 loss: 0.253  lr: 0.001
@@ -43,6 +54,12 @@ Accuracy of truck : 90 %
 
 
 ## 3 net_vgg.py
+```bash
+python cifar.py --model vgg --gpu_id 1
+vgg : val_acc : 0.8284, val_loss : 0.1539972424507141
+```
+
+
 ```bash
 2021-08-07 04:01:42 [10,  2000] train acc: 0.948 loss: 0.156 ; val acc: 0.828 loss: 0.159  lr: 0.001
 2021-08-07 04:02:41 [10,  4000] train acc: 0.946 loss: 0.158 ; val acc: 0.828 loss: 0.158  lr: 0.001

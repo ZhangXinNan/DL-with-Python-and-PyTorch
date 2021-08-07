@@ -51,10 +51,7 @@ def val(net, testloader, criterion):
     return correct / total, loss / total
 
 
-def train(net, trainloader, testloader, num_epoch):
-    criterion = nn.CrossEntropyLoss()
-    optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
-
+def train(net, trainloader, testloader, num_epoch, optimizer, criterion):
     # Print optimizer's state_dict
     print("Optimizer's state_dict:")
     for var_name in optimizer.state_dict():
@@ -126,15 +123,20 @@ def main(args):
     # print(device)
     net.to(device)
 
+    criterion = nn.CrossEntropyLoss()
+    optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
+
     trainloader, testloader = load_data_cifar()
     weights_file = './cifar_net_{}.pth'.format(args.model)
     if not os.path.isfile(weights_file):
-        train(net, trainloader, testloader, args.num_epoch)
+        train(net, trainloader, testloader, args.num_epoch, optimizer, criterion)
         # PATH = './cifar_net.pth'
         torch.save(net.state_dict(), weights_file)
     else:
         net.load_state_dict(torch.load(weights_file))
         net.to(device)
+        val_acc, val_loss = val(net, testloader, criterion)
+        print('{} : val_acc : {}, val_loss : {}'.format(args.model, val_acc, val_loss))
     # 打印每个类别的准确率
     print_accuracy_of_classes(net, testloader)
 
