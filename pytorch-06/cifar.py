@@ -6,8 +6,8 @@ import torch.optim as optim
 from load_data import load_data_cifar, classes
 import argparse
 
-
-device = torch.device("cuda:0" if torch.cuda.is_available() else 'cpu')
+device = None
+# device = torch.device("cuda:0" if torch.cuda.is_available() else 'cpu')
 # print(device)
 
 
@@ -33,6 +33,11 @@ def val(net, testloader, criterion):
 def train(net, trainloader, testloader, num_epoch):
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
+
+    # Print optimizer's state_dict
+    print("Optimizer's state_dict:")
+    for var_name in optimizer.state_dict():
+        print(var_name, "\t", optimizer.state_dict()[var_name])
 
     for epoch in range(num_epoch):  # loop over the dataset multiple times
         running_loss = 0.0
@@ -63,7 +68,9 @@ def train(net, trainloader, testloader, num_epoch):
                 str_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
                 train_acc = running_acc / (2000 * batch_size)
                 train_loss = running_loss / 2000
-                print('%s [%d, %5d] train acc: %.3f loss: %.3f ; val acc: %.3f loss: %.3f' % (str_time, epoch + 1, i + 1, train_acc, train_loss, acc, val_loss))
+                lr = optimizer.state_dict()['param_groups'][0]['lr']
+                print('%s [%d, %5d] train acc: %.3f loss: %.3f ; val acc: %.3f loss: %.3f  lr: %.3f' % (str_time, epoch + 1, i + 1, train_acc, train_loss, acc, val_loss, lr))
+                # print('\t', optimizer.state_dict()['param_groups'])
                 running_loss = 0.0
                 running_acc = 0
     print('Finished Training')
@@ -71,12 +78,19 @@ def train(net, trainloader, testloader, num_epoch):
 
 def get_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--model', default='lenet5', help='cnn, gap, vgg')
+    parser.add_argument('--model', default='lenet5', help='lenet5, gap, vgg')
     parser.add_argument('--num_epoch', default=10, type=int)
+    parser.add_argument('--gpu_id', default=0, type=int)
     return parser.parse_args()
 
 
 def main(args):
+    global device
+    if args.gpu_id >= 0 and torch.cuda.is_available():
+        device = torch.device("cuda:{}".format(args.gpu_id))
+    else:
+        device = torch.device("cpu")
+
     if args.model == 'lenet5':
         from net_lenet import Net
         net = Net()
