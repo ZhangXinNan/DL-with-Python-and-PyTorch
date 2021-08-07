@@ -1,3 +1,4 @@
+import os
 import time
 import torch
 import torch.nn as nn
@@ -10,8 +11,9 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else 'cpu')
 # print(device)
 
 
-def val(net, testloader):
+def val(net, testloader, criterion):
     correct = 0
+    loss = 0
     total = 0
     with torch.no_grad():
         for data in testloader:
@@ -20,11 +22,12 @@ def val(net, testloader):
             labels = labels.to(device)
             outputs = net(images)
             _, predicted = torch.max(outputs.data, 1)
+            loss += criterion(outputs, labels)
             # print(images.size(), labels.size(), predicted.size())
             total += labels.size(0)
             correct += (predicted == labels).sum().item()
     # print('Accuracy of the network on the 10000 test images : %d %%' %(100 * correct/total))
-    return 100 * correct/total
+    return correct / total, loss / total
 
 
 def train(net, trainloader, testloader, num_epoch):
@@ -33,11 +36,13 @@ def train(net, trainloader, testloader, num_epoch):
 
     for epoch in range(num_epoch):  # loop over the dataset multiple times
         running_loss = 0.0
+        running_acc = 0
         for i, data in enumerate(trainloader, 0):
             # get the inputs; data is a list of [inputs, labels]
             inputs, labels = data
             inputs = inputs.to(device)
             labels = labels.to(device)
+            batch_size = inputs.size()[0]
 
             # zero the parameter gradients
             optimizer.zero_grad()
@@ -48,13 +53,19 @@ def train(net, trainloader, testloader, num_epoch):
             loss.backward()
             optimizer.step()
 
+            _, predicted = torch.max(outputs.data, 1)
+            running_acc += (predicted == labels).sum().item()
+
             # print statistics
             running_loss += loss.item()
             if i % 2000 == 1999:    # print every 2000 mini-batches
-                acc = val(net, testloader)
+                acc, val_loss = val(net, testloader, criterion)
                 str_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
-                print('%s [%d, %5d] loss: %.3f accuracy: %.3f' % (str_time, epoch + 1, i + 1, running_loss / 2000, acc))
+                train_acc = running_acc / (2000 * batch_size)
+                train_loss = running_loss / 2000
+                print('%s [%d, %5d] train acc: %.3f loss: %.3f ; val acc: %.3f loss: %.3f' % (str_time, epoch + 1, i + 1, train_acc, train_loss, acc, val_loss))
                 running_loss = 0.0
+                running_acc = 0
     print('Finished Training')
 
 
@@ -67,16 +78,13 @@ def get_args():
 
 def main(args):
     if args.model == 'lenet5':
-        from net import Net
-        net = Net()
-    elif args.model == 'cnn':
-        from cnn_net import Net
+        from net_lenet import Net
         net = Net()
     elif args.model == 'gap':
         from net_gap import Net
         net = Net()
     elif args.model == 'vgg':
-        from vgg import VGG
+        from net_vgg import VGG
         net = VGG()
 
     # device = torch.device("cuda:0" if torch.cuda.is_available() else 'cpu')
@@ -84,17 +92,21 @@ def main(args):
     net.to(device)
 
     trainloader, testloader = load_data_cifar()
-    train(net, trainloader, testloader, args.num_epoch)
-
-    # PATH = './cifar_net.pth'
-    torch.save(net.state_dict(), './cifar_net_{}.pth'.format(args.model))
+    weights_file = './cifar_net_{}.pth'.format(args.model)
+    if not os.path.isfile(weights_file):
+        train(net, trainloader, testloader, args.num_epoch)
+        # PATH = './cifar_net.pth'
+        torch.save(net.state_dict(), weights_file)
+    else:
+        net.load_state_dict(torch.load(weights_file))
+        net.to(device)
 
     class_correct = list(0. for i in range(10))
     class_total = list(0. for i in range(10))
     with torch.no_grad():
         for data in testloader:
             images, labels = data
-            inputs = inputs.to(device)
+            images = images.to(device)
             labels = labels.to(device)
             outputs = net(images)
             _, predicted = torch.max(outputs, 1)
