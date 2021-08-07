@@ -3,12 +3,18 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
-class Net(nn.Module):
+class CNNNet(nn.Module):
     def __init__(self):
-        super(Net, self).__init__()
+        super(CNNNet, self).__init__()
         self.conv1 = nn.Conv2d(3, 16, 5)
         self.pool = nn.MaxPool2d(2, 2)
         self.conv2 = nn.Conv2d(16, 36, 3)
+        '''
+        self.conv1 = nn.Conv2d(in_channels=3,out_channels=16,kernel_size=5,stride=1)
+        self.pool1 = nn.MaxPool2d(kernel_size=2,stride=2)
+        self.conv2 = nn.Conv2d(in_channels=16,out_channels=36,kernel_size=3,stride=1)
+        self.pool2 = nn.MaxPool2d(kernel_size=2, stride=2)
+        '''
         self.fc1 = nn.Linear(1296, 128) # 1296 = 6 * 6 * 36
         self.fc2 = nn.Linear(128, 10)
 
@@ -33,7 +39,7 @@ def init_weigths(net):
 
 
 def main():
-    net = Net()
+    net = CNNNet()
     print("查看网络结构：")
     print(net)
 

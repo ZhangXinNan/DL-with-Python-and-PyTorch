@@ -11,6 +11,27 @@ device = None
 # print(device)
 
 
+def print_accuracy_of_classes(net, testloader):
+    class_correct = list(0. for i in range(10))
+    class_total = list(0. for i in range(10))
+    with torch.no_grad():
+        for data in testloader:
+            images, labels = data
+            images = images.to(device)
+            labels = labels.to(device)
+            outputs = net(images)
+            _, predicted = torch.max(outputs, 1)
+            c = (predicted == labels).squeeze()
+            for i in range(4):
+                label = labels[i]
+                class_correct[label] += c[i].item()
+                class_total[label] += 1
+
+    for i in range(10):
+        print('Accuracy of %5s : %2d %%' % (
+            classes[i], 100 * class_correct[i] / class_total[i]))
+
+
 def val(net, testloader, criterion):
     correct = 0
     loss = 0
@@ -78,7 +99,7 @@ def train(net, trainloader, testloader, num_epoch):
 
 def get_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--model', default='lenet5', help='lenet5, gap, vgg')
+    parser.add_argument('--model', default='cnn', help='cnn, gap, vgg')
     parser.add_argument('--num_epoch', default=10, type=int)
     parser.add_argument('--gpu_id', default=0, type=int)
     return parser.parse_args()
@@ -91,8 +112,8 @@ def main(args):
     else:
         device = torch.device("cpu")
 
-    if args.model == 'lenet5':
-        from net_lenet import Net
+    if args.model == 'cnn':
+        from net_cnn import CNNNet as Net
         net = Net()
     elif args.model == 'gap':
         from net_gap import Net
@@ -114,25 +135,8 @@ def main(args):
     else:
         net.load_state_dict(torch.load(weights_file))
         net.to(device)
-
-    class_correct = list(0. for i in range(10))
-    class_total = list(0. for i in range(10))
-    with torch.no_grad():
-        for data in testloader:
-            images, labels = data
-            images = images.to(device)
-            labels = labels.to(device)
-            outputs = net(images)
-            _, predicted = torch.max(outputs, 1)
-            c = (predicted == labels).squeeze()
-            for i in range(4):
-                label = labels[i]
-                class_correct[label] += c[i].item()
-                class_total[label] += 1
-
-    for i in range(10):
-        print('Accuracy of %5s : %2d %%' % (
-            classes[i], 100 * class_correct[i] / class_total[i]))
+    # 打印每个类别的准确率
+    print_accuracy_of_classes(net, testloader)
 
 
 if __name__ == '__main__':
