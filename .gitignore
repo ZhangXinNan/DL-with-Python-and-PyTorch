@@ -14,3 +14,4 @@ Thumbs.db
 
 *.pth
 data/
+logs/
